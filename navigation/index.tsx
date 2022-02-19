@@ -19,16 +19,13 @@ import ModalScreen from '../screens/ModalScreen';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import TabOneScreen from '../screens/TabOneScreen';
 import TabTwoScreen from '../screens/TabTwoScreen';
-import Tabs1Screen from '../screens/Tabs1';
-import Tabs2Screen from '../screens/Tabs2';
-import Tabs3Screen from '../screens/Tabs3';
 import HomeScreen from '../screens/HomeScreen';
 import ListScreen from '../screens/ListScreen';
 import SearchScreen from '../screens/SearchScreen';
 import AccountScreen from '../screens/AccountScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
-import { View } from '../components/Themed';
+import { View, Text } from '../components/Themed';
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
@@ -44,12 +41,7 @@ const Drawer = createDrawerNavigator();
 
 function AppDrawer() {
   return (
-    <Drawer.Navigator
-      drawerContent={props => {
-        return (
-          <CustomDrawerContent {...props} />
-        );
-      }}>
+    <Drawer.Navigator drawerContent={props => <CustomDrawerContent {...props} />}>
       <Drawer.Screen name="Tabs1" component={Tab1Stack} />
       <Drawer.Screen name="Tabs2" component={Tab2Stack} />
       <Drawer.Screen name="Tabs3" component={Tab3Stack} />
@@ -92,21 +84,9 @@ function Tab3Stack() {
     <Stack.Navigator>
       <Stack.Screen 
         name="Tab3" 
-        component={Tabs3Screen} 
+        component={BottomTab3} 
         options={{ headerShown: false }} 
       />
-    </Stack.Navigator>
-  );
-}
-
-function RootNavigator() {
-  return (
-    <Stack.Navigator>
-      <Stack.Screen name="Root" component={BottomTabNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-      <Stack.Group screenOptions={{ presentation: 'modal' }}>
-        <Stack.Screen name="Modal" component={ModalScreen} />
-      </Stack.Group>
     </Stack.Navigator>
   );
 }
@@ -124,6 +104,8 @@ const TabArr = [
     activeIcon: 'view-grid',
     inactiveIcon: 'view-grid-outline',
     component: HomeScreen,
+    color: '#00ffff',
+    alphaColor: '#b0e0e6',
   },
   {
     name: 'List',
@@ -131,6 +113,8 @@ const TabArr = [
     activeIcon: 'heart-plus',
     inactiveIcon: 'heart-plus-outline',
     component: ListScreen,
+    color: '#ff94c9',
+    alphaColor: '#ffbdde',
   },
   {
     name: 'Search',
@@ -138,6 +122,8 @@ const TabArr = [
     activeIcon: 'timeline-plus',
     inactiveIcon: 'timeline-plus-outline',
     component: SearchScreen,
+    color: '#a024ff',
+    alphaColor: '#b452ff',
   },
   {
     name: 'Account',
@@ -145,6 +131,8 @@ const TabArr = [
     activeIcon: 'account-circle',
     inactiveIcon: 'account-circle-outline',
     component: AccountScreen,
+    color: '#bc8e52',
+    alphaColor: '#c7a170',
   },
 ];
 
@@ -173,7 +161,7 @@ const TabButton = (props: any) => {
         duration={1000}
         style={styles.container}
       >
-        <TabBarIcon name={focused ? item.activeIcon : item.inactiveIcon} color={focused ? '#637aff' : '#637aff49' } />
+        <TabBarIcon name={focused ? item.activeIcon : item.inactiveIcon} color={focused ? item.color : '#637aff49' } />
       </Animatable.View>
     </TouchableOpacity>
   )
@@ -217,7 +205,7 @@ const TabButton2 = (props: any) => {
         <View style={styles.btn}>
           <Animatable.View
             ref={circleRef} 
-            style={styles.circle} />
+            style={[styles.circle, { backgroundColor: item.color }]} />
           <TabBarIcon 
             name={focused ? item.activeIcon : item.inactiveIcon}
             color={focused ? '#fff' : '#637aff49' }
@@ -225,10 +213,47 @@ const TabButton2 = (props: any) => {
         </View>
         <Animatable.Text
           ref={textRef}
-          style={styles.text}>
+          style={[styles.text, { color: item.color }]}>
           {item.label}
         </Animatable.Text>
       </Animatable.View>
+    </TouchableOpacity>
+  )
+}
+
+const TabButton3 = (props: any) => {
+  const { item, onPress, accessibilityState } = props
+  const focused = accessibilityState.selected;
+
+  const viewRef = useRef(null);
+  const textRef = useRef(null);
+  
+  useEffect(() => {
+    if (focused) {
+      viewRef.current.animate({0: { scale: 0 }, 0.3: { scale: .7 }, 0.5: { scale: .3 }, 0.8: { scale: .7 }, 1: { scale: 1 }})
+      textRef.current.animate({0: { scale: 0 }, 1: { scale: 1 }})
+    } else {
+      viewRef.current.animate({0: { scale: 1 }, 1: { scale: 0 }})
+      textRef.current.animate({0: { scale: 1 }, 1: { scale: 0 }})
+    }
+  }, [focused]);
+
+  return(
+    <TouchableOpacity 
+      onPress={onPress}
+      activeOpacity={1}
+      style={[styles.container, { flex: focused ? 1 : 0.65 } ]}>
+      <View>
+        <Animatable.View
+          ref={viewRef} 
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: item.color, borderRadius: 16 }]} />
+        <View style={[styles.button, { backgroundColor: focused ? null : item.alphaColor }]}>
+          <TabBarIcon name={focused ? item.activeIcon : item.inactiveIcon} color={focused ? '#fff' : '#637aff49' } />
+          <Animatable.View ref={textRef}>
+            {focused && <Text style={{ color: '#fff', paddingHorizontal: 8, fontWeight: 'bold' }}>{item.label}</Text>}
+          </Animatable.View>
+        </View>
+      </View>
     </TouchableOpacity>
   )
 }
@@ -243,7 +268,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    borderWidth: 4,
+    borderWidth: 2,
     borderColor: '#fff',
     backgroundColor: '#fff',
     alignItems: 'center',
@@ -253,14 +278,18 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#637aff',
     borderRadius: 25,
   },
   text: {
     fontSize: 10,
-    color: '#637aff',
     textAlign: 'center',
   },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 16,
+  }
 });
 
 function BottomTab1() {
@@ -337,45 +366,40 @@ function BottomTab2() {
   );
 }
 
-function BottomTabNavigator() {
+function BottomTab3() {
   const colorScheme = useColorScheme();
 
   return (
     <BottomTab.Navigator
-      initialRouteName="TabOne"
+      initialRouteName="Home"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
+        headerShown: false,
+        tabBarStyle: {
+          height: 70,
+          position: 'absolute',
+          bottom: 16,
+          left: 16,
+          right: 16,
+          borderRadius: 20,
+          backgroundColor: Colors[colorScheme].background,
+        }
       }}>
-      <BottomTab.Screen
-        name="TabOne"
-        component={TabOneScreen}
-        options={({ navigation }: RootTabScreenProps<'TabOne'>) => ({
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Pressable
-              onPress={() => navigation.navigate('Modal')}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.5 : 1,
-              })}>
-              <FontAwesome
-                name="info-circle"
-                size={25}
-                color={Colors[colorScheme].text}
-                style={{ marginRight: 15 }}
-              />
-            </Pressable>
-          ),
-        })}
-      />
-      <BottomTab.Screen
-        name="TabTwo"
-        component={TabTwoScreen}
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
+      {TabArr.map((item) => {
+        const { name, label, activeIcon, inactiveIcon, component } = item
+        return (
+          <BottomTab.Screen
+            key={name}
+            name={name}
+            component={component}
+            options={({ navigation }) => ({
+              tabBarShowLabel: false,
+              // tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? activeIcon : inactiveIcon} color={color} />,
+              tabBarButton: (props) => <TabButton3 {...props} item={item} />
+            })}
+          />
+        )
+      })}
     </BottomTab.Navigator>
   );
 }
