@@ -3,29 +3,57 @@
  * https://reactnavigation.org/docs/getting-started
  *
  */
-import { FontAwesome } from '@expo/vector-icons';
+import { MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import * as React from 'react';
-import { ColorSchemeName, Pressable } from 'react-native';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { useRef, useEffect } from 'react';
+import { ColorSchemeName, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Animatable from 'react-native-animatable';
 
+import { CustomDrawerContent } from '../components/CustomDrawerContent';
 import Colors from '../constants/Colors';
 import useColorScheme from '../hooks/useColorScheme';
 import ModalScreen from '../screens/ModalScreen';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import TabOneScreen from '../screens/TabOneScreen';
 import TabTwoScreen from '../screens/TabTwoScreen';
+import Tabs1Screen from '../screens/Tabs1';
+import Tabs2Screen from '../screens/Tabs2';
+import Tabs3Screen from '../screens/Tabs3';
+import HomeScreen from '../screens/HomeScreen';
+import ListScreen from '../screens/ListScreen';
+import SearchScreen from '../screens/SearchScreen';
+import AccountScreen from '../screens/AccountScreen';
 import { RootStackParamList, RootTabParamList, RootTabScreenProps } from '../types';
 import LinkingConfiguration from './LinkingConfiguration';
+import { View } from '../components/Themed';
 
 export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeName }) {
   return (
     <NavigationContainer
       linking={LinkingConfiguration}
       theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootNavigator />
+      <AppDrawer />
     </NavigationContainer>
+  );
+}  
+
+const Drawer = createDrawerNavigator();
+
+function AppDrawer() {
+  return (
+    <Drawer.Navigator
+      drawerContent={props => {
+        return (
+          <CustomDrawerContent {...props} />
+        );
+      }}>
+      <Drawer.Screen name="Tabs1" component={Tab1Stack} />
+      <Drawer.Screen name="Tabs2" component={Tab2Stack} />
+      <Drawer.Screen name="Tabs3" component={Tab3Stack} />
+    </Drawer.Navigator>
   );
 }
 
@@ -34,6 +62,42 @@ export default function Navigation({ colorScheme }: { colorScheme: ColorSchemeNa
  * https://reactnavigation.org/docs/modal
  */
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+function Tab1Stack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Tab1" 
+        component={BottomTab1} 
+        options={{ headerShown: false }} 
+      />
+    </Stack.Navigator>
+  );
+}
+
+function Tab2Stack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Tab2" 
+        component={Tabs2Screen} 
+        options={{ headerShown: false }} 
+      />
+    </Stack.Navigator>
+  );
+}
+
+function Tab3Stack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Tab3" 
+        component={Tabs3Screen} 
+        options={{ headerShown: false }} 
+      />
+    </Stack.Navigator>
+  );
+}
 
 function RootNavigator() {
   return (
@@ -52,6 +116,113 @@ function RootNavigator() {
  * https://reactnavigation.org/docs/bottom-tab-navigator
  */
 const BottomTab = createBottomTabNavigator<RootTabParamList>();
+
+const TabArr = [
+  {
+    name: 'Home',
+    label: 'Home',
+    activeIcon: 'view-grid',
+    inactiveIcon: 'view-grid-outline',
+    component: HomeScreen,
+  },
+  {
+    name: 'List',
+    label: 'List',
+    activeIcon: 'heart-plus',
+    inactiveIcon: 'heart-plus-outline',
+    component: ListScreen,
+  },
+  {
+    name: 'Search',
+    label: 'Search',
+    activeIcon: 'timeline-plus',
+    inactiveIcon: 'timeline-plus-outline',
+    component: SearchScreen,
+  },
+  {
+    name: 'Account',
+    label: 'Account',
+    activeIcon: 'account-circle',
+    inactiveIcon: 'account-circle-outline',
+    component: AccountScreen,
+  },
+];
+
+const TabButton = (props: any) => {
+  const { item, onPress, accessibilityState } = props
+  const focused = accessibilityState.selected;
+
+  const viewRef = useRef(null);
+
+  useEffect(() => {
+    if (focused) {
+      viewRef.current.animate({0: { scale: .5, rotate: '0deg' }, 1: { scale: 1.5, rotate: '360deg' }})
+    } else {
+      viewRef.current.animate({0: { scale: 1.5, rotate: '360deg' }, 1: { scale: 1, rotate: '0deg' }})
+    }
+  }, [focused]);
+
+  return(
+    <TouchableOpacity 
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={styles.container}
+    >
+      <Animatable.View
+        ref={viewRef}
+        duration={1000}
+        style={styles.container}
+      >
+        <TabBarIcon name={focused ? item.activeIcon : item.inactiveIcon} color={focused ? '#637aff' : '#637aff49' } />
+      </Animatable.View>
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+function BottomTab1() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <BottomTab.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme].tint,
+        headerShown: false,
+        tabBarStyle: {
+          height: 60,
+          position: 'absolute',
+          bottom: 16,
+          left: 16,
+          right: 16,
+          borderRadius: 20,
+        }
+      }}>
+      {TabArr.map((item) => {
+        const { name, label, activeIcon, inactiveIcon, component } = item
+        return (
+          <BottomTab.Screen
+            key={name}
+            name={name}
+            component={component}
+            options={({ navigation }) => ({
+              tabBarShowLabel: false,
+              // tabBarIcon: ({ color, focused }) => <TabBarIcon name={focused ? activeIcon : inactiveIcon} color={color} />,
+              tabBarButton: (props) => <TabButton {...props} item={item} />
+            })}
+          />
+        )
+      })}
+    </BottomTab.Navigator>
+  );
+}
 
 function BottomTabNavigator() {
   const colorScheme = useColorScheme();
@@ -100,8 +271,8 @@ function BottomTabNavigator() {
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
  */
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
+  name: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
   color: string;
 }) {
-  return <FontAwesome size={30} style={{ marginBottom: -3 }} {...props} />;
+  return <MaterialCommunityIcons size={24} style={{ marginBottom: -6 }} {...props} />;
 }
